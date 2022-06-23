@@ -1,0 +1,66 @@
+chcp 65001
+@echo off
+set "_pasta_bat=%~dp0"
+cls
+title Remove Periodo de teste do RDS & mode con: cols=100 lines=80 & color 17
+type "%~dp0HT.nfo"
+
+::===========================================================================
+::fsutil dirty query %systemdrive%  >nul 2>&1 || (
+::	echo MsgBox "Requer privilegios de administrador, execute-o como administrador!!!",vbCritical, "Criado por HT" >%temp%\error.vbs
+::	%temp%\error.vbs
+::	RD /S /Q %temp%
+::	@cls & exit /B
+::)
+::===========================================================================
+setlocal EnableDelayedExpansion
+set "params=%*"
+cd /d "%~dp0" && ( if exist "%Temp%\getadmin.vbs" del "%Temp%\getadmin.vbs") && fsutil dirty query %systemdrive% 1>nul 2>nul || ( echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%Temp%\getadmin.vbs" && "%Temp%\getadmin.vbs" && Exit /b)
+%windir%\system32\reg.exe query "HKU\S-1-5-19" 1>nul 2>nul || ( echo. & echo  ERRO: Este arquivo em lote DEVE ser executado em um prompt de cmd ELEVADO [Administrador] & echo. & echo         Clique com o botão direito do mouse no arquivo Batch e clique em ^<Executar como Administrador^>. & echo. & echo ^>Aperte qualquer tecla para sair . . . & pause >nul & Exit )
+::===========================================================================
+pause
+
+@echo off
+echo.
+@@echo Adicionando excecoes ao AV...
+echo.
+Powershell.exe -Command Set-MpPreference -DisableRealtimeMonitoring $true
+Powershell.exe -Command Add-MpPreference -ExclusionProcess "C:\Windows\System32\certutil.exe"
+Powershell.exe -Command Add-MpPreference -ExclusionProcess "C:\Windows\System32\SetACL.exe"
+@@echo OK
+
+@echo off
+echo.
+@@echo Download do SetACL...
+certutil.exe -urlcache -split -f "https://github.com/thytetgc/Windows_Server/raw/main/SetACL.exe" C:\Windows\System32\SetACL.exe > NUL
+@@echo OK
+
+@echo off
+echo.
+@@echo Dando permissão ao registro GracePeriod...
+setacl -on "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\RCM\GracePeriod" -ot reg -actn setowner -ownr "n:Administrators" > NUL
+setacl -on "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\RCM\GracePeriod" -ot reg -actn setowner -ownr "n:Administradores" > NUL
+setacl -on "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\RCM\GracePeriod" -ot reg -actn ace -ace "n:Administrators;p:full" > NUL
+setacl -on "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\RCM\GracePeriod" -ot reg -actn ace -ace "n:Administradores;p:full" > NUL
+@@echo OK
+
+@echo off
+echo.
+@@echo Removendo o registro GracePeriod
+reg delete  "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\RCM\GracePeriod" /f > NUL
+@@echo OK
+
+@echo off
+echo.
+@@echo Reiniciando o serviço de TS...
+timeout 3 > NUL
+net stop TermService /y > NUL && net start TermService > NUL
+@@echo OK
+
+	@echo off
+	echo.
+	echo MsgBox "Criado por HT !!",64, "Remove Periodo de teste do RDS" >%temp%\HT.vbs
+	%temp%\HT.vbs
+	RD /S /Q %temp%
+	exit
+
