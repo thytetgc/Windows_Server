@@ -5,7 +5,8 @@ CLS
 :: #############################################################################################
 :: # Title:      Limpeza de Disco Total                                                        #
 :: # Created By: Thiago Castro                                                                 #
-:: # Created On: 01-Junho-2022                                                                 #
+:: # Created On: 01-Junho-2022 
+:: # VER 1.0                                                                #
 :: #############################################################################################
 title Limpeza de Disco Total - Feito por HostLP. & mode con: cols=100 lines=50 & color 17
 
